@@ -4,4 +4,4 @@ sealed interface Dot
 
 object Mine : Dot
 
-object NonMine : Dot
+data class NonMine(val mineCount: Int) : Dot

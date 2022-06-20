@@ -10,10 +10,13 @@ import minesweeper.domain.vo.NumberOfMine
 import minesweeper.domain.vo.Width
 
 class MineField(
-    val fields: List<Field>
+    private val _fields: MutableList<Field>
 ) {
+    val fields: List<Field>
+        get() = _fields.toList()
+
     init {
-        require(fields.isNotEmpty()) { "지뢰판은 비어있을수 없습니다." }
+        require(_fields.isNotEmpty()) { "지뢰판은 비어있을수 없습니다." }
     }
 
     companion object {
@@ -25,13 +28,16 @@ class MineField(
             val coordinates = generateCoordinates(height, width)
             val mineCoordinates = mineCoordinateGenerator.generate(coordinates, numberOfMine)
 
-            return coordinates.map {
+            val mineField = coordinates.map {
                 if (it in mineCoordinates) {
                     Field(it, Mine)
                 } else {
-                    Field(it, NonMine)
+                    Field(it, NonMine(0))
                 }
-            }.let(::MineField)
+            }.let { MineField(it.toMutableList()) }
+
+            mineField.calculateMineCount()
+            return mineField
         }
 
         private fun generateCoordinates(
@@ -40,5 +46,9 @@ class MineField(
         ): List<Coordinate> = (START_INDEX until height.value).flatMap { x ->
             (START_INDEX until width.value).map { y -> Coordinate(CoordinateValue(y), CoordinateValue(x)) }
         }
+    }
+
+    private fun calculateMineCount() {
+        fields.map { it.findAroundCoordinates() }
     }
 }
